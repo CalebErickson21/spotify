@@ -1,0 +1,23 @@
+services:
+  frontend:
+    networks:
+      - app-network
+
+  backend:
+    networks:
+      - app-network
+
+  nginx:
+    networks:
+      - app-network
+    depends_on:
+      - frontend # Treat frontend container as dependency for startup order
+      - backend # Treat backend container and dependency for startup order
+
+  postgres:
+    networks:
+      - app-network
+
+networks:
+  app-network: # Define app network for isolated DNS for container communication
+    driver: bridge # Default driver

@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Expose tailwind colors as CSS variables */
+@layer base {
+    :root {
+        --color-accent: theme(colors.accent);
+        --color-neutral: theme(colors.neutral);
+
+        --color-light-background: theme(colors.light.background);
+        --color-light-surface: theme(colors.light.surface);
+        --color-light-text-primary: theme(colors.light.text.primary);
+        --color-light-text-secondary: theme(colors.light.text.secondary);
+    }
+
+    .dark {
+        --color-dark-background: theme(colors.dark.background);
+        --color-dark-surface: theme(colors.dark.surface);
+        --color-dark-text-primary: theme(colors.dark.text.primary);
+        --color-dark-text-secondary: theme(colors.dark.text.secondary);
+    }
+}
+
+/* Chrome / Edge / Safari autofill */
+input:-webkit-autofill {
+    background-color: var(--color-light-background);
+    -webkit-text-fill-color: var(--color-light-text-primary);
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-light-background) inset;
+    box-shadow: 0 0 0px 1000px var(--color-light-background) inset;
+    transition: background-color 300ms ease-in-out 300ms;
+}
+
+.dark input:-webkit-autofill {
+    background-color: var(--color-dark-background);
+    -webkit-text-fill-color: var(--color-dark-text-primary);
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-dark-background) inset;
+    box-shadow: 0 0 0px 1000px var(--color-dark-background) inset;
+    transition: background-color 300ms ease-in-out 300ms;
+}
