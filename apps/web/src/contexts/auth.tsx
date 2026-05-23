@@ -3,10 +3,20 @@ import { createContext, useContext } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as authApi from "@/api/auth";
 import { getApiErrorMessage } from "@/utils/errors";
-import type { AuthContextInterface } from "@/utils/types";
+import type { AuthContextInterface, UserInterface } from "@/utils/types";
 
 // Create context
 const AuthContext = createContext<AuthContextInterface | null>(null);
+
+// User response check
+const isUser = (value: unknown): value is UserInterface => {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        "username" in value
+    );
+};
+
 
 // Auth provider
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -23,6 +33,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const registerMutation = useMutation({
         mutationFn: authApi.register,
         onSuccess: (data) => {
+            if (!isUser(data)) {
+                queryClient.setQueryData(['auth', 'me'], null);
+                throw new Error("Invalid auth response");
+            }
             queryClient.setQueryData(["auth", "me"], data); // Set cache for keys (auth, me) with result of registration request
         },
     });
@@ -32,9 +46,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const loginMutation = useMutation({
         mutationFn: authApi.login,
         onSuccess: (data) => {
-            queryClient.setQueryData(["auth", "me"], data); // Set cache for keys (auth, me) with result of login request
+            if (!isUser(data)) {
+                queryClient.setQueryData(['auth', 'me'], null);
+                throw new Error("Invalid auth response");
+            }
+            queryClient.setQueryData(["auth", "me"], data); // Set cache for keys (auth, me) with result of registration request
         },
     });
+
 
     // Logout mutation
     const logoutMutation = useMutation({
@@ -47,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Transform values into type interface for prop passing
     const value: AuthContextInterface = {
-        user: meQuery.data ?? null, // Default to null if loading or undefined
+        user: isUser(meQuery.data) ? meQuery.data: null, // Default to null if loading or undefined
         isLoading: meQuery.isLoading,
 
         register: registerMutation.mutateAsync,

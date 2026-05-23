@@ -1,280 +1,109 @@
-# TEMPLATE REPO – Apps Directory
+# `<your-project>` — Applications
 
-This `apps/` directory contains the core applications that make up the template repo platform:
-
-- **Desktop Application**: An Electron-based desktop client built with TypeScript and `electron-vite`
-- **Backend API**: A FastAPI (Python) server that provides API endpoints for the platform
-- **Web Frontend**: A React + TypeScript web application built with Vite
-
-This README provides step-by-step instructions for setting up and running each application in your local development environment.
+The `apps/` directory holds the runnable pieces of **`<your-project>`**: web UI, API, desktop shell, and nginx reverse-proxy configuration. Web, API, and database development run through **Docker Compose** at the repository root (see [Quick start](../README.md#quick-start-development)).
 
 ---
 
-## Prerequisites
+## What lives here
 
-Before getting started, ensure you have the following installed:
-
-- **Node.js** (version 18 or higher recommended)
-- **npm** (comes with Node.js)
-- **Python** (version 3.12)
-- **Conda** (Anaconda or Miniconda)
-- **Git**
-
----
-
-## Desktop
-
-The desktop application is built with Electron and TypeScript, providing a native desktop experience for the template project.
-
-### Setup
-
-1. **Create the Electron app**
-
-   ```sh
-   npm install electron-vite@latest desktop
-   ```
-
-   When prompted:
-   - **Framework**: Vanilla
-   - **Variant**: TypeScript
-
-   > **Note**: Vanilla TypeScript is chosen intentionally. React can be added later if UI complexity demands it.
-
-2. **Install dependencies**
-
-   ```sh
-   cd desktop
-   npm install
-   ```
-
-3. **Run in development mode**
-
-   ```sh
-   npm run dev
-   ```
-
-   If successful, an Electron window should open, confirming the desktop development pipeline is working.
+| Path | Role |
+|------|------|
+| [`web/`](web/README.md) | React + TypeScript SPA (Vite) |
+| [`backend/`](backend/README.md) | FastAPI API + Alembic migrations |
+| [`desktop/`](desktop/README.md) | Electron client (**TODO**: Compose dev service; `.exe` via web download) |
+| [`nginx/conf.d/`](nginx/conf.d/) | Dev/prod nginx configs (proxied by Compose `nginx` service) |
 
 ---
 
-## Backend
+## Architecture (development)
 
-The backend provides API endpoints that the desktop and web applications communicate with.
+In development, the browser talks to a single origin. **nginx** terminates HTTP and routes traffic to the Vite dev server or the FastAPI backend. **Postgres** stores data; a one-shot **migrate** job applies Alembic revisions before the backend starts.
 
-### Setup
+The Electron desktop app is developed on the host for now and is not in the Compose stack yet (see [Desktop (Electron)](#desktop-electron)).
 
-1. **Create backend directory**
+```mermaid
+flowchart LR
+  browser[Browser]
+  nginx[nginx:80]
+  web[frontend Vite:5173]
+  api[backend uvicorn:8000]
+  db[(postgres:5432)]
+  migrate[migrate one-shot]
 
-   From the project root:
-
-   ```sh
-   mkdir backend
-   cd backend
-   ```
-
-2. **Create and activate Conda environment**
-
-   ```sh
-   conda create -n kairos-nexus python=3.12
-   conda activate kairos-nexus
-   ```
-
-3. **Create `requirements.txt`**
-
-   Create a `requirements.txt` file with the following content:
-
-   ```txt
-   fastapi
-   uvicorn[standard]
-   ```
-
-   Then install dependencies:
-
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-4. **Create FastAPI application**
-
-   ```sh
-   mkdir app
-   cd app
-   ```
-
-   Create `main.py` with the following contents:
-
-   ```python
-   from fastapi import FastAPI
-
-   app = FastAPI(title="Your Product API")
-
-   @app.get("/health")
-   def health():
-       return {"status": "ok"}
-
-   @app.get("/")
-   def root():
-       return {"message": "Hello from FastAPI"}
-   ```
-
-5. **Run the backend server**
-
-   From the **backend root directory** (the folder containing `app/`):
-
-   ```sh
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-6. **Verify the backend**
-
-   Open the following URLs in a browser:
-
-   - http://localhost:8000
-   - http://localhost:8000/health
-   - http://localhost:8000/docs
-
-   If these load successfully, the backend is running correctly.
-
-### Understanding Uvicorn
-
-FastAPI is a **framework for defining API routes**, but it does not run a web server by itself.
-
-**Uvicorn** is the ASGI web server that:
-- Opens a network port (e.g., `8000`)
-- Listens for incoming HTTP requests
-- Forwards requests to the FastAPI app
-- Returns responses to the client
-
-Request flow:
-
-```
-Client (Browser / Electron / Web)
-        ↓
-     Uvicorn   ← web server
-        ↓
-     FastAPI   ← API logic
+  browser --> nginx
+  nginx -->|"/"| web
+  nginx -->|"/api/"| api
+  migrate --> db
+  api --> db
 ```
 
-FastAPI is always run **through** Uvicorn.
+**Request path**
+
+1. `GET /`, static assets, HMR → `frontend` (Vite on port 5173 inside the network).
+2. `GET|POST /api/...` → `backend` (Uvicorn on port 8000). Nginx strips the `/api` prefix when proxying (see [`nginx/conf.d/web.dev.conf`](nginx/conf.d/web.dev.conf)).
+3. Backend uses SQLAlchemy against `postgres` on the `app-network` bridge.
+
+**Entry URL:** `http://localhost` (or `http://localhost:${NGINX_PORT}` if overridden in the root `.env`).
+
+**API base URL for the web app:** set `VITE_API_URL=/api` in the root `.env` so the browser calls the same origin nginx exposes.
 
 ---
 
-## Frontend
+## Docker services (dev vs prod)
 
-The web frontend is a React + TypeScript application built with Vite, providing a browser-based interface for your template project.
+Compose merges [`docker-compose.yml`](../docker-compose.yml) with an environment overlay:
 
-### Setup
+| Overlay | Services (typical) |
+|---------|-------------------|
+| [`docker-compose.dev.yml`](../docker-compose.dev.yml) | `postgres`, `migrate`, `backend`, `frontend`, `nginx` — bind mounts, hot reload |
+| [`docker-compose.prod.yml`](../docker-compose.prod.yml) | Same names — built images, static frontend, no host mounts |
 
-1. **Create the web application**
+Start and stop commands live in the [root README](../README.md#quick-start-development). This file does not duplicate full `docker compose` invocations.
 
-   From the project root:
+**Nginx configs**
 
-   ```sh
-   npm create vite@latest web -- --template react-ts
-   ```
-
-   When prompted:
-   - Select **No** to rolldown vite
-   - Select **Yes** to install with npm
-   - Select **Yes** to start now
-
-2. **Install dependencies and run**
-
-   ```sh
-   cd web/
-   npm install
-   npm run dev
-   ```
-
-   The application will start in your browser at **localhost**.
-
-3. **Clean up boilerplate**
-
-   Remove the following boilerplate files and code:
-
-   - `src/index.css` (delete file contents - clear file)
-   - `src/App.css` (delete file)
-   - `src/App.tsx` (delete file)
-   - Delete any images in the `./public` directory
-   - `index.html` (update the `<title>` tag)
-   - `main.tsx` Replace the `<App/>` component with ***Hello, World!*** text and remove the import as needed
-
-### Tailwind CSS Setup
-
-1. **Install Tailwind CSS**
-
-   Navigate into the `/web` folder and run:
-
-   ```sh
-   npm install -D tailwindcss@3.4.1 postcss autoprefixer
-   npx tailwindcss init -p
-   ```
-
-   This will:
-   - Install Tailwind CSS and its PostCSS dependencies
-   - Generate `tailwind.config.js`
-   - Generate `postcss.config.js`
-
-2. **Configure Tailwind**
-
-   Edit `tailwind.config.js` and update the content array:
-
-   ```js
-   /** @type {import('tailwindcss').Config} */
-   export default {
-     content: [
-       "./src/**/*.{js,jsx,ts,tsx}",
-     ],
-     theme: {
-       extend: {},
-     },
-     plugins: [],
-   };
-   ```
-
-   Edit `src/index.css` and replace the contents with:
-
-   ```css
-   @tailwind base;
-   @tailwind components;
-   @tailwind utilities;
-   ```
-
-   Ensure `postcss.config.js` looks like this:
-
-   ```js
-   export default {
-     plugins: {
-       tailwindcss: {},
-       autoprefixer: {},
-     },
-   };
-   ```
-
-3. **Run the development server**
-
-   ```sh
-   npm run dev
-   ```
-
-   This will start the app in your web browser's **localhost preview**.
+- Development: [`nginx/conf.d/web.dev.conf`](nginx/conf.d/web.dev.conf)
+- Production: [`nginx/conf.d/web.prod.conf`](nginx/conf.d/web.prod.conf)
 
 ---
 
-## Summary
+## Per-app documentation
 
-At this stage, you have:
+- [**Web**](web/README.md) — React app, `VITE_API_URL`, folder layout
+- [**Backend**](backend/README.md) — FastAPI service, env, logs
+- [**Desktop**](desktop/README.md) — Electron (host dev; Compose + installer download **TODO**)
 
-- ✅ A working Electron desktop application
-- ✅ A working FastAPI backend server
-- ✅ A working React web frontend
-- ✅ Verified local development workflows for all three applications
+Backend internals:
 
-This provides a clean foundation for adding:
-
-- Playwright browser automation
-- Backend-driven control logic
-- Stripe billing integration
-- Postgres database persistence
+- [Python package layout (`app/`)](backend/app/README.md)
+- [Database migrations (`alembic/`)](backend/alembic/README.md)
 
 ---
+
+## Desktop (Electron)
+
+[`desktop/`](desktop/) is an Electron + Vite app, separate from the Compose dev stack today.
+
+| Topic | Status |
+|-------|--------|
+| **Dev in Docker Compose** | **TODO** — no `desktop` service in [`docker-compose.dev.yml`](../docker-compose.dev.yml) yet |
+| **Local dev** | Run `npm run dev` on the host against `http://localhost/api` while Compose runs web/API — see [`desktop/README.md`](desktop/README.md) |
+| **Production** | **TODO** — bundle a Windows `.exe` installer (`npm run dist`) and let users download it from the web app |
+
+---
+
+## Environment files
+
+Two files are required before `docker compose up`:
+
+1. **Repository root** [`.env`](../.env.example) — `DB_*`, `NGINX_PORT`, `VITE_API_URL`
+2. **Backend** [`backend/.env`](backend/.env.example) — JWT, cookies, CORS
+
+See the [root README](../README.md#configuration) for setup steps.
+
+---
+
+## Not covered here
+
+- Step-by-step migration commands → [`backend/alembic/README.md`](backend/alembic/README.md)
+- Layered FastAPI folder conventions → [`backend/app/README.md`](backend/app/README.md)

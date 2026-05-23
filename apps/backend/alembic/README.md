@@ -1,6 +1,8 @@
-# Alembic (Template backend)
+# `<your-project>` — Alembic migrations
 
-Migrations live in `alembic/versions/`. Run commands from the **repository root**. Use the **base** compose file plus the **overlay** for the environment you are targeting.
+Migrations for the **`<your-project>`** backend live in `alembic/versions/`. Run all commands from the **repository root** (after [env setup](../../../README.md#configuration)). Use the **base** compose file plus the **overlay** for the environment you are targeting.
+
+See also: [`../README.md`](../README.md) (backend service overview).
 
 | Environment | Compose files |
 |-------------|----------------|

@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# `<your-project>` — Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Browser UI for **`<your-project>`**: React 19, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, and Axios. In development and production templates, the app runs in Docker and is reached through **nginx** at the repository root—not by opening Vite’s port directly.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## React Compiler
+- **React 19** + **TypeScript**
+- **Vite** — dev server and production build
+- **Tailwind CSS** — styling
+- **React Router** — routing
+- **TanStack Query** — server state (where used)
+- **Axios** — HTTP client with cookie credentials
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Folder layout
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Path | Purpose |
+|------|---------|
+| `src/api/` | API modules (`client.ts`, `auth.ts`, …) |
+| `src/contexts/` | React context providers (e.g. auth) |
+| `src/pages/` | Route-level views |
+| `src/components/` | Shared UI |
+| `src/utils/` | Types, routes, helpers |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## API client
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+[`src/api/client.ts`](src/api/client.ts) creates an Axios instance with:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **`baseURL`** — `import.meta.env.VITE_API_URL` (set `/api` in the root [`.env`](../../.env.example) so requests go through nginx on the same origin)
+- **`withCredentials: true`** — sends HTTP-only auth cookies set by the backend
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Auth endpoints live under `src/api/auth.ts` (`/auth/login`, `/auth/register`, etc.), resolved relative to `VITE_API_URL`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## Running in Docker
+
+**Development:** The `frontend` service runs `npm ci && npm run dev` with the repo bind-mounted. Use the app at [http://localhost](http://localhost) via nginx (HMR works through the proxy).
+
+**Production:** [`Dockerfile`](Dockerfile) builds static assets; build args such as `VITE_API_URL` come from [`docker-compose.prod.yml`](../../docker-compose.prod.yml).
+
+Do not document or require `npm run dev` on the host for the standard template workflow.
+
+---
+
+## Configuration
+
+| Variable | Where | Notes |
+|----------|--------|--------|
+| `VITE_API_URL` | Root `.env` | Typically `/api` behind nginx |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Root `.env` (prod compose) | Optional; used on registration billing UI |
+
+---
+
+## Desktop installer (TODO)
+
+End users will download the Windows desktop app as a bundled `.exe` installer from this web UI (built from [`../desktop/`](../desktop/) with `npm run dist`). Hosting, versioning, and the download page are not implemented in the template yet—see [`../desktop/README.md`](../desktop/README.md).
+
+---
+
+## Further reading
+
+- [Quick start (root)](../../README.md#quick-start-development)
+- [Applications overview](../README.md)
+- [Backend API](../backend/README.md) — contracts and auth cookies

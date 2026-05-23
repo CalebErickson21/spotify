@@ -1,18 +1,21 @@
-# Project Structure
+# `<your-project>` — Application package (`app/`)
 
-This project follows a layered FastAPI architecture designed to scale from a small application to a production-level service. Each folder has a clear responsibility to keep concerns separated, improve testability, and reduce coupling.
+Layered FastAPI layout for **`<your-project>`**, designed to scale from a small service to production. Each folder has a clear responsibility to keep concerns separated, improve testability, and reduce coupling.
 
 ---
 
-## Running the Backend
+## Running
 
-From the `apps/backend` directory, run:
+Run the backend through **Docker Compose** from the repository root—see [Quick start](../../../README.md#quick-start-development) and [`../README.md`](../README.md).
+
+With the dev stack up, optional inspection:
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec backend sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f backend
 ```
 
-Then open `http://localhost:8000` (or `http://<your-machine-ip>:8000` from another device on your network).
+API docs in dev: `http://localhost/api/docs` (via nginx).
 
 ---
 

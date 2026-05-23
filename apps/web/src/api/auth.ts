@@ -19,7 +19,7 @@ export const login = async (data: LoginInterface) => {
 
 
 export const logout = async () => {
-    const res = await api.post('/auth/logout');
+    const res = await api.post(apiPrefix + '/logout');
     return res.data;
 }
 
@@ -31,6 +31,4 @@ export const checkAuth = async () => {
 
 
 // Token refresh
-
-
-// Check authentication
+// TODO
