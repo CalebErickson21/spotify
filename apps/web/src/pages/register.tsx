@@ -7,8 +7,8 @@ import { useAuth } from '@/contexts/auth';
 import type { RegisterInterface } from '@/utils/types';
 import {
   formatPhoneDisplay,
-  parseRawDigits,
   formatPhoneApi,
+  getRawDigits,
 } from '@/utils/phone';
 import { stripWhitespace } from '@/utils/input';
 
@@ -161,6 +161,7 @@ const Register = () => {
                                 }
                                 type="email"
                                 placeholder="Email"
+                                aria-label='Email'
                             />
 
                             {/* Confirm email input */}
@@ -173,6 +174,7 @@ const Register = () => {
                                 }
                                 type="email"
                                 placeholder="Confirm Email"
+                                aria-label='Confirm Email'
                             />
 
                             {/* Phone number input */}
@@ -185,11 +187,11 @@ const Register = () => {
                                         : ''
                                 }
                                 onChange={(e) => {
-                                    setPhoneRawDigits(parseRawDigits(e.target.value));
+                                    setPhoneRawDigits(getRawDigits(e.target.value));
                                 }}
                                 type="tel"
-                                inputMode="numeric"
-                                autoComplete="tel-national"
+                                inputMode="tel"
+                                autoComplete="tel"
                                 placeholder="+1 (415) 555-2671"
                                 aria-label="Phone number (US, 10 digits)"
                             />
@@ -204,6 +206,7 @@ const Register = () => {
                                 }
                                 type="text"
                                 placeholder="Username"
+                                aria-label='Username'
                             />
 
                             {/* Password input */}
@@ -216,6 +219,7 @@ const Register = () => {
                                 }
                                 type="password"
                                 placeholder="Password"
+                                aria-label='Password'
                             />
 
                             {/* Confirm password input */}
@@ -230,6 +234,7 @@ const Register = () => {
                                 }
                                 type="password"
                                 placeholder="Confirm Password"
+                                aria-label='Confirm Password'
                             />
                         </div>
 
@@ -269,6 +274,8 @@ const Register = () => {
                         {registerError || error}
                     </h4>
                 )}
+
+                <h1>{phoneRawDigits}</h1>
 
                 <h3
                 className="text-md mt-2 text-accent

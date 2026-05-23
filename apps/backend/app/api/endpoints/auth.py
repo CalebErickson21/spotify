@@ -102,12 +102,18 @@ def register(
     # Check valid phone number
     try:
         number = phonenumbers.parse(data.phone, "US")
-        clean_number = phonenumbers.is_valid_number(number)
-    except NumberParseException:
+        if not phonenumbers.is_valid_number(number):
+            raise ValueError
+
+        clean_number = phonenumbers.format_number(
+            number,
+            phonenumbers.PhoneNumberFormat.E164
+        )
+    except (NumberParseException, ValueError):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid phone number."
-        )        
+        )      
 
     # Register user
     try:

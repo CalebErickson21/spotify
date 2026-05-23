@@ -79,7 +79,10 @@ class UserService:
             db.add(user) # Mark object for insertion in current session
             db.commit() # Finalize the transaction
             db.refresh(user) # Reloads object from the database
-        
+            logger.debug(
+                'user_created_in_db_successfully',
+                extra={"username": username, "email": email, "phone": phone}
+            )
         except IntegrityError as e:
             db.rollback()
             logger.debug(
