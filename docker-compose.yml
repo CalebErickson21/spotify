@@ -1,24 +1,23 @@
-name: spotify
-
 services:
-  db:
-    image: postgres:17
-    container_name: spotify_db
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT}:5432"
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-  
-volumes:
-  db_data:
+  frontend:
+    networks:
+      - app-network
+
+  backend:
+    networks:
+      - app-network
+
+  nginx:
+    networks:
+      - app-network
+    depends_on:
+      - frontend # Treat frontend container as dependency for startup order
+      - backend # Treat backend container and dependency for startup order
+
+  postgres:
+    networks:
+      - app-network
+
+networks:
+  app-network: # Define app network for isolated DNS for container communication
+    driver: bridge # Default driver

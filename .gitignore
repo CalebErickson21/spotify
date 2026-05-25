@@ -1,12 +1,18 @@
-# Environment variables
-.env
-
 # Cache
 .cache
 .cache/
 
+# Environment variables
+**/.env
+**/.env.*
+# Allow example env files
+!.env.example
+
+# Node modules
+**/node_modules/
+
 # Python
-__pycache__/
+**/__pycache__/
 
 # Logs
-*.log
+**/*.log*
