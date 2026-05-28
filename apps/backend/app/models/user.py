@@ -1,6 +1,12 @@
 # Import dependencies
 from datetime import datetime
-from sqlalchemy import DateTime, String, func
+
+from sqlalchemy import (
+    DateTime
+    ,String
+    ,UniqueConstraint
+    ,func
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -10,6 +16,14 @@ from app.core.settings import Lengths
 # User class
 class User(Base):
     __tablename__ = "users"
+
+    __table_args__ = (
+        UniqueConstraint("id")
+        ,UniqueConstraint("username")
+        ,UniqueConstraint("email")
+        ,UniqueConstraint("phone")
+        ,
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
@@ -51,8 +65,10 @@ class User(Base):
         server_default=func.now(),
         nullable=False
     )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        nullable=False
+        onupdate=func.now(),
+        nullable=False,
     )

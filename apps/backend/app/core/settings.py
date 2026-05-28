@@ -59,7 +59,7 @@ settings = Settings() # Needed because we are accessing environment variables
 
 
 class Lengths:
-    ##### DB Length Checks #####
+    # Users table
     USERNAME: int = 127
     PASSWORD: int = 127
     PASSWORD_HASH: int = 255
@@ -67,3 +67,6 @@ class Lengths:
     NAME: int = 127
     PHONE: int = 23
 
+    # Spotify accounts table
+    SPOTIFY_USER_ID: int = 255
+    STATUS: int = 50

@@ -6,7 +6,8 @@
 **/.env
 **/.env.*
 # Allow example env files
-!.env.example
+!**/.env.example
+!**/.env.cron.example
 
 # Node modules
 **/node_modules/

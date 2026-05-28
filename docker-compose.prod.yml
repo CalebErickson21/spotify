@@ -18,6 +18,7 @@ services:
       retries: 5
       start_period: 30s
 
+
   migrate:
     build:
       context: ./apps/backend
@@ -38,6 +39,29 @@ services:
     networks:
       - app-network
     restart: "no"
+
+
+  cron:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/backend/.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOGS_DIR: app/logs
+    command: ["python", "-m", "appc.jobs.update_database"] # Override CMD from Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no" 
+
 
   backend:
     build:
@@ -61,6 +85,7 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+
   frontend:
     build:
       context: ./apps/web
@@ -71,6 +96,7 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+
 
   nginx:
     image: nginx:1.27-alpine
