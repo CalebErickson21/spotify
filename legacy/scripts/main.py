@@ -5,9 +5,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.exceptions import SpotifyException
 from datetime import datetime, timezone
 import time
-
-# Import utils
-from utils import Logger
+import logging
 
 # Load environment variables
 load_dotenv()
@@ -17,7 +15,7 @@ MAX_RETRIES = 5
 HOUR_MS = 60 * 60 * 1000
 
 # Set up the logger
-logger = Logger()
+logger = logging.Logger(name="logger")
 
 # Spotify API client
 scope = "playlist-read-private playlist-modify-private playlist-modify-public user-read-recently-played"
@@ -157,8 +155,8 @@ if __name__ == "__main__":
     if len(removed_songs) == 0:
         logger.log("info", f"No songs to remove")
         exit()
-    sp.playlist_remove_all_occurrences_of_items(playlist_id, list(removed_songs))
-    logger.log("info", f"Removed {len(removed_songs)} songs from the playlist")
+    # sp.playlist_remove_all_occurrences_of_items(playlist_id, list(removed_songs))
+    # logger.log("info", f"Removed {len(removed_songs)} songs from the playlist")
 
     # Get new playlist stats
     get_playlist_stats(playlist_id)
